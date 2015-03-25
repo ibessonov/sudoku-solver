@@ -12,6 +12,9 @@ public final class Field {
     private final int count;
 
     public Field(String sudoku) {
+        if (!sudoku.matches("\\d{81}")) {
+            throw new IllegalArgumentException("sudoku");
+        }
         int c = 0;
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
@@ -23,7 +26,7 @@ public final class Field {
         count = c;
     }
 
-    public Field(int[][] sudoku) {
+    Field(int[][] sudoku) {
         int c = 0;
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {

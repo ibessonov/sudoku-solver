@@ -13,6 +13,10 @@ import java.util.stream.Stream;
  */
 final class Util {
 
+    public static void log(String format, Object... args) {
+        System.out.printf(format, args);
+    }
+
     public static List<int[]> generateSat(Field field) {
         // raw +1-in-k-SAT
         return Stream.concat(

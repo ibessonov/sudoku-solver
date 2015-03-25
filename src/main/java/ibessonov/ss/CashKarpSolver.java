@@ -1,10 +1,11 @@
 package ibessonov.ss;
 
+import static ibessonov.ss.Util.log;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
+import static java.util.stream.IntStream.range;
 import java.util.stream.Stream;
 
 /**
@@ -36,22 +37,26 @@ final class CashKarpSolver {
     private static final double[] b4 = { 2825d/27648, 0, 18575d/48384, 13525d/55296, 277d/14336, 1d/4      };
 
     private final int N, M, L;
+    private final double precision;
+    private final boolean loggingEnabled;
     private final Literal[][] d1;
     private final Literal[][] d2;
     private final int[] km;
     private final double[] y;
     private final Random random = new Random();
 
-    public CashKarpSolver(int N, PositiveLiteral[][] disjunctions) {
+    public CashKarpSolver(int N, PositiveLiteral[][] disjunctions, double precision, boolean loggingEnabled) {
         this.N = N;
         this.M = disjunctions.length;
         this.L = this.N + this.M;
+        this.precision = precision;
+        this.loggingEnabled = loggingEnabled;
         this.y = new double[L];
         this.d1 = Stream.of(disjunctions).map(d
                 -> Stream.of(d).map(v -> new Literal(v.index, v.present ? 1 : -1)).toArray(Literal[]::new)
         ).toArray(Literal[][]::new);
-        this.d2 = IntStream.range(0, N).mapToObj(i
-                -> IntStream.range(0, M).mapToObj(m
+        this.d2 = range(0, N).mapToObj(i
+                -> range(0, M).mapToObj(m
                         -> Stream.of(d1[m])
                                  .filter(pair -> pair.index == i)
                                  .findFirst()
@@ -65,8 +70,8 @@ final class CashKarpSolver {
     public int[] solve() {
         double dt = 0.03125, t = 0, dmax = 1;
 
-        IntStream.range(0, N).forEach(i -> y[i] = 2 * random.nextDouble() - 1);
-        IntStream.range(N, L).forEach(i -> y[i] = 1 + Math.abs(random.nextGaussian()));
+        range(0, N).forEach(i -> y[i] = 2 * random.nextDouble() - 1);
+        range(N, L).forEach(i -> y[i] = 1 + Math.abs(random.nextGaussian()));
         for (Literal[] l : d1) {
             if (l.length != 1) continue;
             y[l[0].index] = l[0].c;
@@ -76,7 +81,7 @@ final class CashKarpSolver {
         double[][] k = new double[butcherTableau.length][L];
 
         System.arraycopy(y, 0, _y, 0, L);
-        int outCount = 0;
+        int outCount = 0; // logging stuff
 
         while (dmax > 0.1) {
             for (int b = 0; b < butcherTableau.length; b++) {
@@ -99,14 +104,14 @@ final class CashKarpSolver {
             }
 
             double error = DoubleStream.of(y).limit(N).map(Math::abs).max().getAsDouble();
-            if (error < 1e-5) {
+            if (error < precision / 100) {
                 dt /= 0.75;
                 System.arraycopy(_y, 0, y, 0, L);
                 continue;
-            } else if (error > 1e-3) {
+            } else if (error > precision) {
                 dt *= 0.75;
-                if (outCount == 0) {
-                    System.out.printf("%.6f %.6f\n", t, dmax);
+                if (outCount == 0 && loggingEnabled) {
+                    log("%.4f %.4f\n", t, dmax);
                 }
                 outCount = (outCount + 1) % 100;
                 System.arraycopy(_y, 0, y, 0, L);
@@ -121,8 +126,7 @@ final class CashKarpSolver {
             for (int l = 0; l < L; l++) y[l] = _y[l] + dt * y[l];
 
             t += dt;
-//            dmax = DoubleStream.of(s).map(Math::abs).map(d -> 1 - d).max().getAsDouble();
-//            dmax = IntStream.range(0, M).mapToDouble(this::Km).max().getAsDouble();
+
             dmax = 0;
             for (int m = 0; m < M; m++) {
                 double d = Km(m);
@@ -131,8 +135,10 @@ final class CashKarpSolver {
 
             System.arraycopy(y, 0, _y, 0, L);
         }
-        System.out.println(t);
-        return IntStream.range(0, N).filter(i -> y[i] > 0).toArray();
+        if (loggingEnabled) {
+            log("%.4f\n", t);
+        }
+        return range(0, N).filter(i -> y[i] > 0).toArray();
     }
 
     private double Km(int m) {

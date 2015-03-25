@@ -1,7 +1,10 @@
 package ibessonov.ss;
 
+import static ibessonov.ss.Util.generateExcludeSat;
+import static ibessonov.ss.Util.generateSat;
 import static ibessonov.ss.Util.i;
 import static ibessonov.ss.Util.j;
+import static ibessonov.ss.Util.log;
 import static ibessonov.ss.Util.x;
 import java.util.HashMap;
 import java.util.List;
@@ -19,18 +22,31 @@ import java.util.stream.Stream;
 public final class SudokuSolver {
 
     private final Field field;
+    private double precision = 1e-3;
+    private boolean loggingEnabled = false;
 
-    public SudokuSolver(String sudoku) {
+    public static SudokuSolverBuilder builder(String sudoku) {
+        return new SudokuSolverBuilder(sudoku);
+    }
+
+    SudokuSolver(String sudoku) {
         field = new Field(sudoku);
     }
 
-    public static Field solve(String sudoku) {
-        return new SudokuSolver(sudoku).solve();
+    public void setPrecision(double precision) {
+        if (precision <= 0 || precision > 1) {
+            throw new IllegalArgumentException("precision");
+        }
+        this.precision = precision;
+    }
+
+    public void enableLogging(boolean enable) {
+        this.loggingEnabled = enable;
     }
 
     public Field solve() {
-        final List<int[]> disjunctions = Util.generateSat(field);
-        List<int[]> excludes = Util.generateExcludeSat(field);
+        final List<int[]> disjunctions = generateSat(field);
+        List<int[]> excludes = generateExcludeSat(field);
         final int[][] result = new int[9][9];
 
         // initial values
@@ -50,16 +66,13 @@ public final class SudokuSolver {
         return new Field(result);
     }
 
-    private static int[] solve0(List<int[]> positives, List<int[]> negatives) {
+    private int[] solve0(List<int[]> positives, List<int[]> negatives) {
 
         // +1-in-k-SAT into k-SAT
         Set<IntArray> set = positives.stream().map(IntArray::new).collect(Collectors.toSet());
-//        Set<IntArray> excluded = negatives.stream()
-//                .map(IntArray::new).collect(Collectors.toSet());
 
         // indexing
         final Map<Integer, Integer> mapping = new HashMap<>();
-//        Stream.concat(set.stream(), excluded.stream()).forEach(array
         set.stream().forEach(array
                 -> IntStream.of(array.values())
                 .filter(index -> !mapping.containsKey(index)) // rely on execution order
@@ -85,8 +98,10 @@ public final class SudokuSolver {
                 set.stream().map(valueMapper.apply(true)),
                 excluded.stream().map(valueMapper.apply(false))
         ).toArray(PositiveLiteral[][]::new);
-        System.out.printf("Complexity approximation: %.3f\n", 1d * disjunctions.length / N);
-        int[] result = new CashKarpSolver(N, disjunctions).solve();
+        if (loggingEnabled) {
+            log("Complexity approximation: %.3f\n", 1d * disjunctions.length / N);
+        }
+        int[] result = new CashKarpSolver(N, disjunctions, precision, loggingEnabled).solve();
         return IntStream.of(result).map(i -> reverseMapping[i]).toArray();
     }
 }
