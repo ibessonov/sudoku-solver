@@ -4,7 +4,6 @@ import static ibessonov.ss.Util.log;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Random;
-import java.util.stream.DoubleStream;
 import static java.util.stream.IntStream.range;
 import java.util.stream.Stream;
 
@@ -72,10 +71,7 @@ final class CashKarpSolver {
 
         range(0, N).forEach(i -> y[i] = 2 * random.nextDouble() - 1);
         range(N, L).forEach(i -> y[i] = 1 + Math.abs(random.nextGaussian()));
-        for (Literal[] l : d1) {
-            if (l.length != 1) continue;
-            y[l[0].index] = l[0].c;
-        }
+        Stream.of(d1).filter(l -> l.length == 1).forEach(l -> y[l[0].index] = l[0].c);
 
         double[] _y = new double[L];
         double[][] k = new double[butcherTableau.length][L];
@@ -103,7 +99,12 @@ final class CashKarpSolver {
                 y[l] *= dt;
             }
 
-            double error = DoubleStream.of(y).limit(N).map(Math::abs).max().getAsDouble();
+            double error = 0;
+            for (int i = 0; i < N; i++) {
+                double e = Math.abs(y[i]);
+                if (e > error) error = e;
+            }
+
             if (error < precision / 100) {
                 dt /= 0.75;
                 System.arraycopy(_y, 0, y, 0, L);
@@ -146,7 +147,7 @@ final class CashKarpSolver {
         for (Literal pair : d1[m]) {
             result *= (1 - y[pair.index] * pair.c);
         }
-        return result / (1 << km[m]);
+        return result / (1L << km[m]);
     }
 
     private double Kmi(int m, int i) {
@@ -157,7 +158,7 @@ final class CashKarpSolver {
             }
             result *= (1 - y[pair.index] * pair.c);
         }
-        return result / (1 << km[m]);
+        return result / (1L << km[m]);
     }
 
     // ds/dt

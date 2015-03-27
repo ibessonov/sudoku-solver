@@ -1,7 +1,5 @@
 package ibessonov.ss;
 
-import java.util.function.Consumer;
-
 /**
  *
  * @author ibessonov
@@ -9,7 +7,7 @@ import java.util.function.Consumer;
 public final class SudokuSolverBuilder {
 
     private final String sudoku;
-    private Consumer<SudokuSolver> configurator;
+    private Configurator<SudokuSolver> configurator;
 
     public SudokuSolverBuilder(String sudoku) {
         this.sudoku = sudoku;
@@ -27,8 +25,6 @@ public final class SudokuSolverBuilder {
     }
 
     public SudokuSolver build() {
-        SudokuSolver result = new SudokuSolver(sudoku);
-        configurator.accept(result);
-        return result;
+        return configurator.accept(new SudokuSolver(sudoku));
     }
 }
