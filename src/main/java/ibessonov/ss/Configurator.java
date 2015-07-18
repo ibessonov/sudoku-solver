@@ -9,7 +9,7 @@ interface Configurator<T> {
 
     void configure(T t);
 
-    default T accept(T t) {
+    default T apply(T t) {
         configure(t);
         return t;
     }

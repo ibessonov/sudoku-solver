@@ -19,12 +19,12 @@ public final class SudokuSolverBuilder {
         return this;
     }
 
-    public SudokuSolverBuilder enableLogging(boolean enable) {
+    public SudokuSolverBuilder withLogging(boolean enable) {
         configurator = configurator.andThen(s -> s.enableLogging(enable));
         return this;
     }
 
     public SudokuSolver build() {
-        return configurator.accept(new SudokuSolver(sudoku));
+        return configurator.apply(new SudokuSolver(sudoku));
     }
 }

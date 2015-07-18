@@ -25,7 +25,7 @@ public final class SudokuSolver {
     private double precision = 1e-3;
     private boolean loggingEnabled = false;
 
-    public static SudokuSolverBuilder builder(String sudoku) {
+    public static SudokuSolverBuilder of(String sudoku) {
         return new SudokuSolverBuilder(sudoku);
     }
 
