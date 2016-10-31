@@ -3,28 +3,21 @@ package ibessonov.ss;
 import java.util.Arrays;
 
 /**
- *
  * @author ibessonov
  */
 final class IntArray {
 
     private final int[] values;
+    private final int hash;
 
-    public IntArray(int... values) {
-        this.values = values.clone();
-        Arrays.sort(this.values);
+    IntArray(int... values) {
+        this.values = values;
+        Arrays.sort(values);
+        this.hash = Arrays.hashCode(values);
     }
 
-    public int at(int i) {
-        return values[i];
-    }
-
-    public int size() {
-        return values.length;
-    }
-
-    public int[] values() {
-        return values.clone();
+    int[] values() {
+        return values;
     }
 
     @Override
@@ -34,6 +27,6 @@ final class IntArray {
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(values);
+        return hash;
     }
 }

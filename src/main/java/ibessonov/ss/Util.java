@@ -1,15 +1,16 @@
 package ibessonov.ss;
 
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import static java.util.stream.IntStream.range;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.IntStream.range;
+import static java.util.stream.Stream.concat;
+
 /**
- *
  * @author ibessonov
+ * Don't even try to rewrite this beast with loops...
  */
 final class Util {
 
@@ -17,9 +18,9 @@ final class Util {
         System.out.printf(format, args);
     }
 
-    public static List<int[]> generateSat(Field field) {
+    public static List<int[]> generatePositiveSat(Field field) {
         // raw +1-in-k-SAT
-        return Stream.concat(
+        return concat(
                 Stream.of(field.rows()).flatMap(row
                         -> range(0, 9).filter(row::hasNo).mapToObj(x
                                 -> Stream.of(row.cells())
@@ -29,7 +30,7 @@ final class Util {
                                 .mapToInt(cell -> cell.index(x))
                         )
                 ),
-                Stream.concat(
+                concat(
                         Stream.of(field.columns()).flatMap(column
                                 -> range(0, 9).filter(column::hasNo).mapToObj(x
                                         -> Stream.of(column.cells())
@@ -39,7 +40,7 @@ final class Util {
                                         .mapToInt(cell -> cell.index(x))
                                 )
                         ),
-                        Stream.concat(
+                        concat(
                                 Stream.of(field.blocks()).flatMap(block
                                         -> range(0, 9).filter(block::hasNo).mapToObj(x
                                                 -> Stream.of(block.cells())
@@ -61,25 +62,25 @@ final class Util {
                                 )
                         )
                 )
-        ).map(IntStream::toArray).filter(a -> a.length > 0).collect(Collectors.toList());
+        ).parallel().map(IntStream::toArray).filter(a -> a.length > 0).collect(toList());
     }
 
-    public static List<int[]> generateExcludeSat(Field field) {
-        return Stream.concat(
+    public static List<int[]> generateNegativeSat(Field field) {
+        return concat(
                 Stream.of(field.rows()).flatMap(row
                         -> range(0, 9).mapToObj(x
                                 -> Stream.of(row.cells())
                                 .mapToInt(cell -> cell.index(x))
                         )
                 ),
-                Stream.concat(
+                concat(
                         Stream.of(field.columns()).flatMap(column
                                 -> range(0, 9).mapToObj(x
                                         -> Stream.of(column.cells())
                                         .mapToInt(cell -> cell.index(x))
                                 )
                         ),
-                        Stream.concat(
+                        concat(
                                 Stream.of(field.blocks()).flatMap(block
                                         -> range(0, 9).mapToObj(x
                                                 -> Stream.of(block.cells())
@@ -93,36 +94,37 @@ final class Util {
                                 )
                         )
                 )
-        ).map(IntStream::toArray).flatMap(array
+        ).parallel().map(IntStream::toArray).flatMap(array
                 -> range(0, 9).mapToObj(i
                         -> range(0, i).mapToObj(j
                                 -> new int[]{array[i], array[j]}
                         )
                 )
-        ).flatMap(Function.identity()).map(pair
-                -> present(field, pair[0]) && present(field, pair[1])
-                        ? new int[]{}
-                        : !present(field, pair[0]) && !present(field, pair[1])
-                                ? pair
-                                : present(field, pair[0])
-                                        ? new int[]{pair[1]}
-                                        : new int[]{pair[0]}
-        ).filter(a -> a.length > 0).collect(Collectors.toList());
+        ).flatMap(s -> s).map(pair
+                -> present(field, pair[0])
+                        ? (present(field, pair[1])
+                            ? new int[]{}
+                            : new int[]{pair[1]}
+                        ) : (present(field, pair[1])
+                            ? new int[]{pair[0]}
+                            : pair
+                        )
+        ).filter(a -> a.length > 0).collect(toList());
     }
 
-    public static int i(int index) {
+    static int i(int index) {
         return index / 9 / 9;
     }
 
-    public static int j(int index) {
+    static int j(int index) {
         return index / 9 % 9;
     }
 
-    public static int x(int index) {
+    static int x(int index) {
         return index % 9;
     }
 
-    public static int index(int i, int j, int x) {
+    static int index(int i, int j, int x) {
         return (i * 9 + j) * 9 + x;
     }
 

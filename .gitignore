@@ -1,3 +1,5 @@
 nb-configuration.xml
 nbactions.xml
+sudoku-solver.iml
+/.idea
 target/

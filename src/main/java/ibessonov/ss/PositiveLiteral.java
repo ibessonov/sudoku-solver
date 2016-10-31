@@ -1,16 +1,15 @@
 package ibessonov.ss;
 
 /**
- *
  * @author ibessonov
  */
 final class PositiveLiteral {
 
-    public final int index;
-    public final boolean present;
+    final int ijx;
+    final boolean present;
 
-    public PositiveLiteral(int a, boolean present) {
-        this.index = a;
+    PositiveLiteral(int a, boolean present) {
+        this.ijx = a;
         this.present = present;
     }
 }

@@ -3,43 +3,29 @@ package ibessonov.ss;
 import static java.util.stream.IntStream.range;
 
 /**
- *
  * @author ibessonov
  */
 public final class Field {
 
     private final byte[][] field = new byte[9][9];
-    private final int count;
 
     public Field(String sudoku) {
         if (!sudoku.matches("\\d{81}")) {
             throw new IllegalArgumentException("sudoku");
         }
-        int c = 0;
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
-                byte x = (byte) (sudoku.charAt(i * 9 + j) - '0');
-                field[i][j] = x;
-                c += (x == 0) ? 0 : 1;
+                field[i][j] = (byte) (sudoku.charAt(i * 9 + j) - '0');
             }
         }
-        count = c;
     }
 
     Field(int[][] sudoku) {
-        int c = 0;
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
-                byte x = (byte) sudoku[i][j];
-                field[i][j] = x;
-                c += (x == 0) ? 0 : 1;
+                field[i][j] = (byte) sudoku[i][j];
             }
         }
-        count = c;
-    }
-
-    public int count() {
-        return count;
     }
 
     public Cell cell(int i, int j) {
@@ -120,16 +106,8 @@ public final class Field {
             return range(0, 9).mapToObj(this::cell).toArray(Cell[]::new);
         }
 
-        public Block block(int j) {
-            return Field.this.block(i, j);
-        }
-
         public boolean hasNo(int x) {
             return range(0, 9).allMatch(j -> field[i][j] != x + 1);
-        }
-
-        public boolean empty(int j) {
-            return field[i][j] == 0;
         }
     }
 
@@ -149,16 +127,8 @@ public final class Field {
             return range(0, 9).mapToObj(this::cell).toArray(Cell[]::new);
         }
 
-        public Block block(int i) {
-            return Field.this.block(i, j);
-        }
-
         public boolean hasNo(int x) {
             return range(0, 9).allMatch(i -> field[i][j] != x + 1);
-        }
-
-        public boolean empty(int i) {
-            return field[i][j] == 0;
         }
     }
 
